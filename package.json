@@ -1,0 +1,26 @@
+{
+  "name": "@tigersway/gulp-responsive",
+  "description": "Generates all needed image sizes for responsive design",
+  "keywords": [
+    "gulp",
+    "gulp-plugin",
+    "responsive-images",
+    "sharp"
+  ],
+  "version": "1.0.0-alpha.1",
+  "license": "MIT",
+  "author": "Ben Michaud <ben@tigersway.net>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TigersWay/gulp-responsive.git"
+  },
+  "dependencies": {
+    "chalk": "^4.0.0",
+    "fast-glob": "^3.2.2",
+    "micromatch": "^4.0.2",
+    "normalize-path": "^3.0.0",
+    "plugin-error": "^1.0.1",
+    "sharp": "^0.25.2",
+    "through2": "^3.0.1"
+  }
+}

@@ -1,0 +1,6 @@
+.backgroundImage {
+  background-image: url('images/img3-1600x.png');
+  background-image: image-set('images/img3-1600x.png'1x,
+      'images/img3-1600x@2x.png'2x,
+      'images/img3-1600x@3x.png'3x);
+}
