@@ -13,10 +13,10 @@ const PLUGIN_NAME = require('./package.json').name;
 
 
 const rename = (file, options) => {
-  file.basename = (options.prefix || '') + file.stem + (options.suffix || '') + file.extname;
+  file.basename = (options.prefix || '') + file.stem + (options.suffix || '') + (options.extname || file.extname);
 }
 
-module.exports = (config, options) => {
+module.exports = (config, options = {}) => {
 
   return through.obj(function(file, encoding, callback) {
 
@@ -28,19 +28,34 @@ module.exports = (config, options) => {
 
       for (const [pattern, commands] of Object.entries(config)) {
         if (match.isMatch(file.relative, pattern)) {
-          console.log(pattern, file.relative);
-          let image = sharp(file.contents);
 
-          Object.entries(commands).forEach(([api, params]) => {
-            console.log('  ', api, params);
-            if (image[api]) image[api](params)
-            else if (api == 'rename') {
-              rename(file, params);
-            };
-          })
-          file.contents = image;
-          this.push(file);
+          console.log(file.relative);
 
+          if (Array.isArray(commands)) {
+            commandSet = commands;
+            commandSet.forEach(commands => {
+              let cloned = file.clone();
+              let image = sharp(cloned.contents);
+              Object.entries(commands).forEach(([api, params]) => {
+                if (image[api]) image[api](params)
+                else if (api == 'rename') {
+                  rename(cloned, params);
+                };
+              });
+              cloned.contents = image;
+              this.push(cloned);
+            })
+          } else {
+            let image = sharp(file.contents);
+            Object.entries(commands).forEach(([api, params]) => {
+              if (image[api]) image[api](params)
+              else if (api == 'rename') {
+                rename(file, params);
+              };
+            })
+            file.contents = image;
+            this.push(file);
+          }
           break;
         }
       }
@@ -54,15 +69,15 @@ module.exports = (config, options) => {
 
 
 
-const buildConfig = (patterns, options = {}) => {
+const buildConfig = (patterns, root = process.cwd()) => {
 
   // Find all images...
   let images = [];
-  glob.sync(patterns, options).forEach(file => {
-    [...fs.readFileSync(`${options.cwd}/${file}`, {encoding: 'utf8'})
-      .matchAll(/(?:https?:)?([/|.|\w|-]+[/|.|\w|\s|-|@]*\.(?:jpg|jpeg|png))/gi)]
+  glob.sync(patterns, {cwd:root}).forEach(file => {
+    [...fs.readFileSync(`${root}/${file}`, {encoding: 'utf8'})
+      .matchAll(/(?:https?:)?([/|.|\w|-]+[/|.|\w|\s|-|@]*\.(?:jpg|jpeg|png|tiff))/gi)]
       .forEach(match => {
-        if (!path.isAbsolute(match[1])) match[1]  = path.join(path.dirname(file), match[1]);
+        if (!path.isAbsolute(match[1])) match[1] = path.normalize(`/${path.dirname(file)}/${match[1]}`);
         images.push(unixify(match[1]));
       });
   });
@@ -80,12 +95,12 @@ const buildConfig = (patterns, options = {}) => {
       config[name] = [config[name]];
     }
 
-    config[name].push(details);
+    config[name].push(details);                 // Second and more, push to array
   };
 
   images.forEach(image => {
     let info, name, dpi, width, height;
-    if ((info = /(.*)(?:-(\d{0,4})x(\d{0,4})(?:@(\d(?:\.\d)?)x)?)\.(jpg|jpeg|png)/.exec(image)) !== null) {
+    if ((info = /(.*)(?:-(\d{0,4})x(\d{0,4})(?:@(\d(?:\.\d)?)x)?)\.(jpg|jpeg|png|tiff)/.exec(image)) !== null) {
       name = info[1] + '.' + info[5];
       dpi = info[4] || 1;
       width = info[2] ? info[2] * dpi : undefined;
