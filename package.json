@@ -7,7 +7,7 @@
     "responsive-images",
     "sharp"
   ],
-  "version": "1.0.0-alpha.3",
+  "version": "1.0.0-beta.1",
   "license": "MIT",
   "author": "Ben Michaud <ben@tigersway.net>",
   "repository": {
