@@ -1,19 +1,23 @@
 const through = require('through2');
 const pluginError = require('plugin-error');
-const chalk = require('chalk');
 
-const sharp = require('sharp');
-const match = require('micromatch');
 const glob = require('fast-glob');
+const match = require('micromatch');
+const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 const unixify = require('normalize-path');
+const chalk = require('chalk');
 
 const PLUGIN_NAME = require('./package.json').name;
 
 
 const rename = (file, options) => {
-  file.basename = (options.prefix || '') + file.stem + (options.suffix || '') + (options.extname || file.extname);
+  file.basename =
+    (options.prefix || '')
+    + (options.basename || file.stem)
+    + (options.suffix || '')
+    + (options.extname || file.extname);
 }
 
 module.exports = (config, options = {}) => {
@@ -28,8 +32,6 @@ module.exports = (config, options = {}) => {
 
       for (const [pattern, commands] of Object.entries(config)) {
         if (match.isMatch(file.relative, pattern)) {
-
-          console.log(file.relative);
 
           if (Array.isArray(commands)) {
             commandSet = commands;
@@ -77,7 +79,8 @@ const buildConfig = (patterns, root = process.cwd()) => {
     [...fs.readFileSync(`${root}/${file}`, {encoding: 'utf8'})
       .matchAll(/(?:https?:)?([/|.|\w|-]+[/|.|\w|\s|-|@]*\.(?:jpg|jpeg|png|tiff))/gi)]
       .forEach(match => {
-        if (!path.isAbsolute(match[1])) match[1] = path.normalize(`/${path.dirname(file)}/${match[1]}`);
+        if (path.isAbsolute(match[1])) match[1] = match[1].slice(1)
+        else match[1] = path.normalize(`${path.dirname(file)}/${match[1]}`);
         images.push(unixify(match[1]));
       });
   });

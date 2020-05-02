@@ -13,20 +13,21 @@ const $ = require('gulp-load-plugins')({maintainScope: false});
 
 const images = () => {
 
-  return src('images/*.{png,jpg}')
+  return src('stock/images/*.{png,jpg}', {base:'stock})
     .pipe($.responsive({
-      'hero-*.jpg': [{
+      '**/hero-*.jpg': [{
         resize: {width: 1200, height: 400},
+        grayscale: {},
         rename: {suffix: '-1200x400'}
       },{
         resize: {width: 400},
         rename: {suffix: '-400x'}
       }],
-      '*.jpg': {
+      '**/*.jpg': {
         resize: {width: 400},
         rename: {suffix: '-400x'}
       },
-      '*.tiff': {
+      '**/*.tiff': {
         jpeg: {quality: 100},
         rename: {extname: 'jpg'}
       }
@@ -37,7 +38,7 @@ const images = () => {
       // compressionLevel: 6,
       // max: true
     }))
-    .pipe(dest('public/images'))
+    .pipe(dest('public'))
   )
 });
 ```
@@ -73,6 +74,7 @@ Supported filename formats for detection of dimensions
 - `-x<height>[@<scale>x]`: image-x100.jpg or image-x100@2x.jpg
 - `-<width>x<height>[@<scale>x]` : image-200x100.jpg or image-200x100@1.5x.jpg
 
+Rename options: basename, prefix, suffix, extname
 
 ## Special thanks
 
