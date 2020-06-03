@@ -7,18 +7,19 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 const unixify = require('normalize-path');
-const chalk = require('chalk');
+// const chalk = require('chalk');
 
 const PLUGIN_NAME = require('./package.json').name;
 
 
 const rename = (file, options) => {
-  file.basename =
+  if (typeof options == 'string') file.path = options;
+  else file.basename =
     (options.prefix || '')
     + (options.basename || file.stem)
     + (options.suffix || '')
     + (options.extname || file.extname);
-}
+};
 
 module.exports = (config, options = {}) => {
 
@@ -34,27 +35,30 @@ module.exports = (config, options = {}) => {
         if (match.isMatch(file.relative, pattern)) {
 
           if (Array.isArray(commands)) {
-            commandSet = commands;
+            let commandSet = commands;
             commandSet.forEach(commands => {
               let cloned = file.clone();
               let image = sharp(cloned.contents);
               Object.entries(commands).forEach(([api, params]) => {
-                if (image[api]) image[api](params)
+                if (image[api]) image[api](params);
                 else if (api == 'rename') {
                   rename(cloned, params);
-                };
+                }
               });
               cloned.contents = image;
               this.push(cloned);
-            })
+            });
           } else {
             let image = sharp(file.contents);
             Object.entries(commands).forEach(([api, params]) => {
-              if (image[api]) image[api](params)
-              else if (api == 'rename') {
+              if (image[api]) {
+                if (api == 'resize') image[api](params || {fit:sharp.fit.cover, position:sharp.strategy.entropy});
+                else image[api](params);
+                image[api](params);
+              } else if (api == 'rename') {
                 rename(file, params);
-              };
-            })
+              }
+            });
             file.contents = image;
             this.push(file);
           }
@@ -64,7 +68,7 @@ module.exports = (config, options = {}) => {
 
       callback();
     }
-  })
+  });
 };
 
 
@@ -79,7 +83,7 @@ const buildConfig = (patterns, root = process.cwd()) => {
     [...fs.readFileSync(`${root}/${file}`, {encoding: 'utf8'})
       .matchAll(/(?:https?:)?([/|.|\w|-]+[/|.|\w|\s|-|@]*\.(?:jpg|jpeg|png|tiff))/gi)]
       .forEach(match => {
-        if (path.isAbsolute(match[1])) match[1] = match[1].slice(1)
+        if (path.isAbsolute(match[1])) match[1] = match[1].slice(1);
         else match[1] = path.normalize(`${path.dirname(file)}/${match[1]}`);
         images.push(unixify(match[1]));
       });
@@ -103,14 +107,14 @@ const buildConfig = (patterns, root = process.cwd()) => {
 
   images.forEach(image => {
     let info, name, dpi, width, height;
-    if ((info = /(.*)(?:-(\d{0,4})x(\d{0,4})(?:@(\d(?:\.\d)?)x)?)\.(jpg|jpeg|png|tiff)/.exec(image)) !== null) {
-      name = info[1] + '.' + info[5];
-      dpi = info[4] || 1;
-      width = info[2] ? info[2] * dpi : undefined;
-      height = info[3] ? info[3] * dpi : undefined;
+    if ((info = /(.*)((?:-(\d{0,4})x(\d{0,4})(?:@(\d(?:\.\d)?)x)?))\.(jpg|jpeg|png|tiff)/.exec(image)) !== null) {
+      name = info[1] + '.' + info[6];
+      dpi = info[5] || 1;
+      width = info[3] ? info[3] * dpi : undefined;
+      height = info[4] ? info[4] * dpi : undefined;
       addConfig(name, {
         resize: {width: width, height: height},
-        rename: image
+        rename: {suffix: info[2]}
       });
     } else {
       addConfig(image, {});

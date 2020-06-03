@@ -1,13 +1,20 @@
-# @tigersway/gulp-responsive ![GitHub package.json version](https://img.shields.io/github/package-json/v/tigersway/gulp-responsive?style=flat-square) ![GitHub last commit](https://img.shields.io/github/last-commit/tigersway/gulp-responsive?style=flat-square)
+# @tigersway/gulp-responsive  ![GitHub last commit](https://img.shields.io/github/last-commit/tigersway/gulp-responsive?style=flat-square)  ![GitHub issues](https://img.shields.io/github/issues/tigersway/gulp-responsive?style=flat-square)
+
 Generates all needed image sizes for responsive design
 
 Complete rewrite of gulp-responsive & gulp-responsive-config, with dependencies updated and in only one package. Should also be able to apply any sharp command.
 
-## Usage
+### Install  [![npm](https://img.shields.io/npm/v/@tigersway/gulp-responsive?style=flat-square)](https://www.npmjs.com/package/@tigersway/gulp-responsive)
 
-### Images to generate
+```sh
+$ npm install @tigersway/gulp-responsive
+```
 
-```javascript
+### Usage
+
+#### Images to generate
+
+```js
 const { src, dest } = require('gulp');
 const $ = require('gulp-load-plugins')({maintainScope: false});
 
@@ -31,21 +38,15 @@ const images = () => {
         jpeg: {quality: 100},
         rename: {extname: 'jpg'}
       }
-    }, {
-      // withMetadata: false,
-      // errorOnEnlargement: true,
-      // quality: 80,
-      // compressionLevel: 6,
-      // max: true
     }))
     .pipe(dest('public'))
   )
 });
 ```
 
-### Images already defined (from html to images)
+#### Images already defined (from html to images)
 
-```javascript
+```js
 const { src, dest } = require('gulp');
 const $ = require('gulp-load-plugins')({maintainScope: false});
 
@@ -56,13 +57,7 @@ const images = () => {
 
   return src('images/*.{png,jpg}')
       // ... and use it!
-    .pipe($.responsive(config, {
-      // withMetadata: false,
-      // errorOnEnlargement: true,
-      // quality: 80,
-      // compressionLevel: 6,
-      // max: true
-    }))
+    .pipe($.responsive(config))
     .pipe(dest('public/images'))
   )
 });
@@ -76,7 +71,7 @@ Supported filename formats for detection of dimensions
 
 Rename options: basename, prefix, suffix, extname
 
-## Special thanks
+### Special thanks
 
 + [sharp](https://github.com/lovell/sharp) & [sharp-docs](https://sharp.pixelplumbing.com/)
 + [gulp-responsive](https://github.com/mahnunchik/gulp-responsive)
