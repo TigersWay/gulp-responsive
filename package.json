@@ -7,7 +7,7 @@
     "responsive-images",
     "sharp"
   ],
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0",
   "license": "MIT",
   "author": "Ben Michaud <ben@tigersway.net>",
   "repository": {
@@ -15,7 +15,6 @@
     "url": "git+https://github.com/TigersWay/gulp-responsive.git"
   },
   "dependencies": {
-    "chalk": "^4.0.0",
     "fast-glob": "^3.2.2",
     "micromatch": "^4.0.2",
     "normalize-path": "^3.0.0",

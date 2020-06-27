@@ -21,7 +21,7 @@ const rename = (file, options) => {
     + (options.extname || file.extname);
 };
 
-module.exports = (config, options = {}) => {
+module.exports = (config/*, options = {}*/) => {
 
   return through.obj(function(file, encoding, callback) {
 

@@ -12,6 +12,8 @@ $ npm install @tigersway/gulp-responsive
 
 ### Usage
 
+Two Gulp&trade; plugins [gulp-newer](https://www.npmjs.com/package/gulp-newer) & [gulp-vinyl-flow](https://www.npmjs.com/package/gulp-vinyl-flow) may be of help.
+
 #### Images to generate
 
 ```js
@@ -20,7 +22,7 @@ const $ = require('gulp-load-plugins')({maintainScope: false});
 
 const images = () => {
 
-  return src('stock/images/*.{png,jpg}', {base:'stock})
+  return src('stock/images/*.{png,jpg}', {base:'stock'})
     .pipe($.responsive({
       '**/hero-*.jpg': [{
         resize: {width: 1200, height: 400},
@@ -39,6 +41,8 @@ const images = () => {
         rename: {extname: 'jpg'}
       }
     }))
+    .pipe($.newer('public'))
+    .pipe($.vinylFlow())
     .pipe(dest('public'))
   )
 });
@@ -53,11 +57,13 @@ const $ = require('gulp-load-plugins')({maintainScope: false});
 const images = () => {
 
   // build the configuration...
-  let config = $.responsive.buildConfig(['**/*.{html,css}'], {cwd:'samples'});
+  let config = $.responsive.buildConfig(['**/*.{html,css}'], 'samples');
 
-  return src('images/*.{png,jpg}')
+  return src('images/**/*.{png,jpg}')
       // ... and use it!
     .pipe($.responsive(config))
+    .pipe($.newer('public/images'))
+    .pipe($.vinylFlow())
     .pipe(dest('public/images'))
   )
 });
