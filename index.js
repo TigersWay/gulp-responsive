@@ -94,15 +94,9 @@ const buildConfig = (patterns, root = process.cwd()) => {
 
   const addConfig = (name, details) => {
     if (typeof config[name] == 'undefined') {   // First time, that config item does not exist.
-      config[name] = details;
-      return;
+      config[name] = new Set();
     }
-
-    if (!Array.isArray(config[name])) {         // Already one, so change to array.
-      config[name] = [config[name]];
-    }
-
-    config[name].push(details);                 // Second and more, push to array
+    config[name].add(JSON.stringify(details));                 // Second and more, push to array
   };
 
   images.forEach(image => {
@@ -121,6 +115,10 @@ const buildConfig = (patterns, root = process.cwd()) => {
     }
   });
 
+  Object.entries(config).forEach(([name, values]) => {
+    config[name] = [];
+    values.forEach(value => config[name].push(JSON.parse(value)));
+  });
   return config;
 };
 
