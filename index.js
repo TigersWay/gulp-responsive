@@ -74,8 +74,7 @@ module.exports = (config/*, options = {}*/) => {
 
 
 
-
-const buildConfig = (patterns, root = process.cwd()) => {
+module.exports.buildConfig = (patterns, root = process.cwd()) => {
 
   // Find all images...
   let images = [];
@@ -122,4 +121,47 @@ const buildConfig = (patterns, root = process.cwd()) => {
   return config;
 };
 
-module.exports.buildConfig = buildConfig;
+const merge = (...args) => {
+  let target = {};
+  let merger = (obj) => {
+    for (let prop in obj) {
+      if (obj.hasOwnProperty(prop)) { // eslint-disable-line no-prototype-builtins
+        if (Object.prototype.toString.call(obj[prop]) === '[object Object]') {
+          target[prop] = merge(target[prop], obj[prop]);
+        } else {
+          target[prop] = obj[prop];
+        }
+      }
+    }
+  };
+  for (let i = 0; i < args.length; i++) {
+    merger(args[i]);
+  }
+
+  return target;
+};
+
+module.exports.insertSome = (config, select, newCommands) => {
+  Object.entries(config).forEach(([pattern, commands]) => {
+    if (match.isMatch(pattern, select)) {
+      commands.forEach((command, index, commands) => {
+        //Object.assign(commands[index], newCommands);
+        commands[index] = merge(command, newCommands);
+      });
+    }
+  });
+
+  return config;
+};
+
+module.exports.webp = (config) => {
+  Object.entries(config).forEach(([pattern, commands]) => {
+    let webp = [];
+    commands.forEach(command => {
+      webp.push(merge(command, {webp: {}, rename: {extname: '.webp'}}));
+    });
+    config[pattern] = [...commands, ...webp];
+  });
+
+  return config;
+};
