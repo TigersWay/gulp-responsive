@@ -1,13 +1,14 @@
-const through = require('through2');
-const pluginError = require('plugin-error');
+const
+  through = require('through2'),
+  pluginError = require('plugin-error'),
+  fs = require('fs'),
+  path = require('path');
 
-const glob = require('fast-glob');
-const match = require('micromatch');
-const sharp = require('sharp');
-const fs = require('fs');
-const path = require('path');
-const unixify = require('normalize-path');
-// const chalk = require('chalk');
+const
+  glob = require('fast-glob'),
+  match = require('micromatch'),
+  sharp = require('sharp'),
+  unixify = require('normalize-path');
 
 const PLUGIN_NAME = require('./package.json').name;
 
@@ -20,6 +21,7 @@ const rename = (file, options) => {
     + (options.suffix || '')
     + (options.extname || file.extname);
 };
+
 
 module.exports = (config/*, options = {}*/) => {
 
@@ -80,44 +82,45 @@ module.exports.buildConfig = (patterns, root = process.cwd()) => {
   let images = [];
   glob.sync(patterns, {cwd:root}).forEach(file => {
     [...fs.readFileSync(`${root}/${file}`, {encoding: 'utf8'})
-      .matchAll(/(?:https?:)?([/|.|\w|-]+[/|.|\w|\s|-|@]*\.(?:jpg|jpeg|png|tiff))/gi)]
+      .matchAll(/(?:https?:)?([/|.|\w|-]+[/|.|\w|\s|-|@]*\.(?:jpg|jpeg|png|tiff|webp))/gi)]
       .forEach(match => {
         if (path.isAbsolute(match[1])) match[1] = match[1].slice(1);
         else match[1] = path.normalize(`${path.dirname(file)}/${match[1]}`);
         images.push(unixify(match[1]));
       });
   });
+  // Get only unique/distinct images
+  images = [...new Set(images)];
 
   // ... and build the config elements (object/array) with needed information.
   let config = {};
 
-  const addConfig = (name, details) => {
-    if (typeof config[name] == 'undefined') {   // First time, that config item does not exist.
-      config[name] = new Set();
-    }
-    config[name].add(JSON.stringify(details));                 // Second and more, push to array
-  };
-
   images.forEach(image => {
     let info, name, dpi, width, height;
-    if ((info = /(.*)((?:-(\d{0,4})x(\d{0,4})(?:@(\d(?:\.\d)?)x)?))\.(jpg|jpeg|png|tiff)/.exec(image)) !== null) {
-      name = info[1] + '.' + info[6];
+    if ((info = /(.*)((?:-(\d{0,4})x(\d{0,4})(?:@(\d(?:\.\d)?)x)?))\.(jpg|jpeg|png|tiff|webp)/.exec(image)) !== null) {
+      let details = {};
       dpi = info[5] || 1;
       width = info[3] ? info[3] * dpi : undefined;
       height = info[4] ? info[4] * dpi : undefined;
-      addConfig(name, {
-        resize: {width: width, height: height},
-        rename: {suffix: info[2]}
-      });
+      details.resize = {width: width, height: height};
+      switch(info[6]) {
+        case 'webp':
+          name = info[1] + '.jpg';
+          details.rename = {suffix: info[2], extname: '.webp'};
+          details.webp = {};
+          break;
+        default:
+          name = info[1] + '.' + info[6];
+          details.rename = {suffix: info[2]};
+      }
+      if (!config[name]) config[name] = [details];
+      else config[name].push(details);
     } else {
-      addConfig(image, {});
+      if (!config[name]) config[name] = [];
+      else config[name].push({});
     }
   });
 
-  Object.entries(config).forEach(([name, values]) => {
-    config[name] = [];
-    values.forEach(value => config[name].push(JSON.parse(value)));
-  });
   return config;
 };
 
@@ -145,7 +148,6 @@ module.exports.insertSome = (config, select, newCommands) => {
   Object.entries(config).forEach(([pattern, commands]) => {
     if (match.isMatch(pattern, select)) {
       commands.forEach((command, index, commands) => {
-        //Object.assign(commands[index], newCommands);
         commands[index] = merge(command, newCommands);
       });
     }

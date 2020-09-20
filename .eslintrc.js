@@ -9,7 +9,7 @@ module.exports = {
     ecmaVersion: 2018
   },
   rules: {
-    indent: ['error', 2],
+    indent: ['error', 2, { "SwitchCase": 1 }],
     semi: ['error', 'always'],
     'linebreak-style': ['error', 'unix'],
     'no-console': 'off',
