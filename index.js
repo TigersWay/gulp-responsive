@@ -82,8 +82,10 @@ module.exports.buildConfig = (patterns, root = process.cwd()) => {
   let images = [];
   glob.sync(patterns, {cwd:root}).forEach(file => {
     [...fs.readFileSync(`${root}/${file}`, {encoding: 'utf8'})
-      .matchAll(/(?:https?:)?([/|.|\w|-]+[/|.|\w|\s|-|@]*\.(?:jpg|jpeg|png|tiff|webp))/gi)]
+      // .matchAll(/(?:https?:)?([/|.|\w|-]+[/|.|\w|\s|-|@]*\.(?:jpg|jpeg|png|tiff|webp))/gi)]
+      .matchAll(/(?:https?:)?([/.\w-]+[/.\w\s-%@]*\.(?:jpg|jpeg|png|tiff|webp))/gi)]
       .forEach(match => {
+        match[1] = decodeURI(match[1]);
         if (path.isAbsolute(match[1])) match[1] = match[1].slice(1);
         else match[1] = path.normalize(`${path.dirname(file)}/${match[1]}`);
         images.push(unixify(match[1]));
