@@ -40,8 +40,9 @@ const images = () => {
         jpeg: {quality: 100},
         rename: {extname: 'jpg'}
       }
-    }))
-    .pipe($.newer('public'))
+    // }))
+    }, 'public/images')) // v1.5.0+ No need for gulp-newer anymore, if dest foolder set.
+    // .pipe($.newer('public'))
     .pipe($.vinylFlow())
     .pipe(dest('public'))
   )
@@ -61,8 +62,9 @@ const images = () => {
 
   return src('images/**/*.{png,jpg}')
       // ... and use it!
-    .pipe($.responsive(config))
-    .pipe($.newer('public/images'))
+    .pipe($.responsive(config, 'public/images')) // v1.5.0+ No need for gulp-newer anymore, if dest foolder set.
+    // .pipe($.responsive(config))
+    // .pipe($.newer('public/images'))
     .pipe($.vinylFlow())
     .pipe(dest('public/images'))
   )

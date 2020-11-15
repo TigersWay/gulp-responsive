@@ -13,7 +13,13 @@ const
 const PLUGIN_NAME = require('./package.json').name;
 
 
-const rename = (file, options) => {
+const alreadyExists = (file, destinationFolder, options) => {
+  let destFilename =  (options.prefix || '') + (options.basename || file.stem) + (options.suffix || '') + (options.extname || file.extname);
+
+  return fs.existsSync(path.join(destinationFolder, path.dirname(file.relative), destFilename));
+};
+
+const renameCommand = (file, options) => {
   if (typeof options == 'string') file.path = options;
   else file.basename =
     (options.prefix || '')
@@ -22,8 +28,21 @@ const rename = (file, options) => {
     + (options.extname || file.extname);
 };
 
+const allCommands = (file, image, commands) => {
+  Object.entries(commands).forEach(([api, params]) => {
+    if (image[api]) {
+      if (api == 'resize') image[api](params || {fit:sharp.fit.cover, position:sharp.strategy.entropy});
+      else image[api](params);
+      image[api](params);
+    } else if (api == 'rename') {
+      renameCommand(file, params);
+    }
+  });
+  return image;
+};
 
-module.exports = (config/*, options = {}*/) => {
+
+module.exports = (config, destinationFolder) => {
 
   return through.obj(function(file, encoding, callback) {
 
@@ -33,36 +52,30 @@ module.exports = (config/*, options = {}*/) => {
 
     if (file.isBuffer()) {
 
-      for (const [pattern, commands] of Object.entries(config)) {
+      for (const [pattern, commandSet] of Object.entries(config)) {
         if (match.isMatch(file.relative, pattern)) {
 
-          if (Array.isArray(commands)) {
-            let commandSet = commands;
+          if (Array.isArray(commandSet)) {
+
             commandSet.forEach(commands => {
-              let cloned = file.clone();
-              let image = sharp(cloned.contents);
-              Object.entries(commands).forEach(([api, params]) => {
-                if (image[api]) image[api](params);
-                else if (api == 'rename') {
-                  rename(cloned, params);
-                }
-              });
-              cloned.contents = image;
-              this.push(cloned);
-            });
-          } else {
-            let image = sharp(file.contents);
-            Object.entries(commands).forEach(([api, params]) => {
-              if (image[api]) {
-                if (api == 'resize') image[api](params || {fit:sharp.fit.cover, position:sharp.strategy.entropy});
-                else image[api](params);
-                image[api](params);
-              } else if (api == 'rename') {
-                rename(file, params);
+              if (destinationFolder && commands.rename && alreadyExists(file, destinationFolder, commands.rename)) {
+                // File already exists
+              } else {
+                let cloned = file.clone();
+                cloned.contents = allCommands(cloned, sharp(cloned.contents), commands);
+                this.push(cloned);
               }
             });
-            file.contents = image;
-            this.push(file);
+
+          } else {
+
+            let commands = commandSet;
+            if (destinationFolder && commands.rename && alreadyExists(file, destinationFolder, commands.rename)) {
+              // File already exists
+            } else {
+              file.contents = allCommands(file, sharp(file.contents), commands);
+              this.push(file);
+            }
           }
           break;
         }
@@ -72,7 +85,6 @@ module.exports = (config/*, options = {}*/) => {
     }
   });
 };
-
 
 
 
